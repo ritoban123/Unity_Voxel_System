@@ -9,7 +9,7 @@ using UnityEngine;
 
 public class Chunk
 {
-    public const int CHUNK_SIZE = 12;
+    public const int CHUNK_SIZE = 8;
 
     protected Voxel[,,] Voxels;
     public MeshData MeshData;
@@ -30,7 +30,10 @@ public class Chunk
             {
                 for (int z = 0; z < CHUNK_SIZE; z++)
                 {
-                    Voxels[x, y, z] = new Voxel(x, y, z, this);
+                    Voxels[x, y, z] = new VoxelAir(x, y, z, this);
+                    // HACK to keep the edges air
+                    if (x > 1 && y > 1 && z > 1 && x < CHUNK_SIZE-1 && y < CHUNK_SIZE - 1 && z < CHUNK_SIZE - 1 && UnityEngine.Random.value > 0.5f)
+                        Voxels[x, y, z] = new Voxel(x, y, z, this);
                 }
             }
         }
