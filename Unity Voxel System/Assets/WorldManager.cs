@@ -13,10 +13,14 @@ public class WorldManager : MonoBehaviour
 
     public Dictionary<WorldPos, Chunk> worldPosChunkMap = new Dictionary<WorldPos, Chunk>();
 
-    public int numChunks = 3;
+    // FIXME: Hardcoding! Create a voxel data registry
+    public VoxelData StoneVoxel;
+    public VoxelData AirVoxel;
+
+    int numChunks = 8;
 
     #region Unity Methods
-
+    // ALERT: We are going only 1 up in the y axis
     private void Start()
     {
         // Create some chunks (2x1x2 = 4 chunks)
@@ -57,14 +61,17 @@ public class WorldManager : MonoBehaviour
     /// <param name="z">The z coordinate of the chunk in world space. The number of blocks before this, not the chunk index</param>
     public void CreateChunk(int x, int y, int z)
     {
-        Chunk chunk = new Chunk(
-            this,
-            Instantiate(
+        GameObject chunkObj = Instantiate(
                 ChunkPrefab,
                 new Vector3(x, y, z),
-                Quaternion.identity
+                Quaternion.identity,
+                this.transform
                 )
-                as GameObject,
+                as GameObject;
+        chunkObj.name = "Chunk " + x/Chunk.CHUNK_SIZE + " " + y/Chunk.CHUNK_SIZE + " " + z/Chunk.CHUNK_SIZE;
+        Chunk chunk = new Chunk(
+            this,
+            chunkObj,
             new WorldPos(x, y, z)
             );
         worldPosChunkMap.Add(new WorldPos(x, y, z), chunk);
@@ -77,13 +84,13 @@ public class WorldManager : MonoBehaviour
                 {
                     if (yi <=
                         Mathf.PerlinNoise(
-                            (float)(xi + x)/ (Chunk.CHUNK_SIZE * numChunks) * 10f + (float)Network.time/4f,
-                            (float)(zi + z) / (Chunk.CHUNK_SIZE * numChunks) * 10f + (float)Network.time/4f)
+                            (float)(xi + x) / (Chunk.CHUNK_SIZE) * 0.3f + (float)Network.time / 4f,
+                            (float)(zi + z) / (Chunk.CHUNK_SIZE) * 0.3f + (float)Network.time / 4f)
                         * Chunk.CHUNK_SIZE
                         )
-                        SetVoxel(x + xi, y + yi, z + zi, new Voxel(xi, yi, zi, chunk));
+                        SetVoxel(x + xi, y + yi, z + zi, new Voxel(xi, yi, zi, chunk, StoneVoxel));
                     else
-                        SetVoxel(x + xi, y + yi, z + zi, new VoxelAir(x, y, z, chunk));
+                        SetVoxel(x + xi, y + yi, z + zi, new Voxel(x, y, z, chunk, AirVoxel));
                 }
             }
         }
@@ -118,11 +125,11 @@ public class WorldManager : MonoBehaviour
     public Voxel GetVoxel(int x, int y, int z)
     {
         Chunk chunk = GetChunk(x, y, z);
-        if (chunk == null)
+        if (chunk == null)  
             // HACK. We are off the edge, so we are just returning an empty air voxel. 
             //         This probably will cause problems, but its fine for now. 
             //         After all, you do expect nothingness if you fall off the edge of the earth!
-            return new VoxelAir(x, y, z, null);
+            return new Voxel(x, y, z, null, AirVoxel);
 
         // FIXME: Converting the voxel from world space to chunk space. In practice, 
         //          we should overload the worldPos subtraction operator or create a conversion function

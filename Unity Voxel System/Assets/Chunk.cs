@@ -9,7 +9,7 @@ using UnityEngine;
 
 public class Chunk
 {
-    public const int CHUNK_SIZE = 128;
+    public const int CHUNK_SIZE = 16;
 
     public MeshData MeshData;
     public WorldManager World;

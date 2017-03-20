@@ -14,35 +14,36 @@ public class Voxel
     /// </summary>
     public enum Direction { Up, Down, North, South, East, West }
 
-    // TODO: What about different block types?
+    public VoxelData Data { get; protected set; }
+
     public int X;
     public int Y;
     public int Z;
     public Chunk Chunk;
 
-    public Voxel(int x, int y, int z, Chunk chunk)
+    public Voxel(int x, int y, int z, Chunk chunk, VoxelData data)
     {
         X = x;
         Y = y;
         Z = z;
         Chunk = chunk;
+        Data = data;
     }
 
 
     public virtual void CalculateMeshData(MeshData mesh)
     {
-        // BUG: This will give us a null reference exception if this voxel is on the edge of the chunk. This will be fixed when we have multiple chunks and we can compare to the voxels in the other chunks
-        if (Chunk.GetVoxel(X, Y, Z + 1).IsSolid(Direction.South) == false)
+        if (IsSolid(Direction.North) && Chunk.GetVoxel(X, Y, Z + 1).IsSolid(Direction.South) == false)
             CalculateFaceData(mesh, Direction.North);
-        if (Chunk.GetVoxel(X, Y, Z - 1).IsSolid(Direction.North) == false) 
+        if (IsSolid(Direction.South) && Chunk.GetVoxel(X, Y, Z - 1).IsSolid(Direction.North) == false)
             CalculateFaceData(mesh, Direction.South);
-        if (Chunk.GetVoxel(X + 1, Y, Z).IsSolid(Direction.West) == false)
+        if (IsSolid(Direction.East) && Chunk.GetVoxel(X + 1, Y, Z).IsSolid(Direction.West) == false)
             CalculateFaceData(mesh, Direction.East);
-        if (Chunk.GetVoxel(X - 1, Y, Z).IsSolid(Direction.East) == false) 
+        if (IsSolid(Direction.West) && Chunk.GetVoxel(X - 1, Y, Z).IsSolid(Direction.East) == false)
             CalculateFaceData(mesh, Direction.West);
-        if (Chunk.GetVoxel(X, Y + 1, Z).IsSolid(Direction.Down) == false) 
+        if (IsSolid(Direction.Up) && Chunk.GetVoxel(X, Y + 1, Z).IsSolid(Direction.Down) == false)
             CalculateFaceData(mesh, Direction.Up);
-        if (Chunk.GetVoxel(X, Y - 1, Z).IsSolid(Direction.Up) == false)
+        if (IsSolid(Direction.Down) && Chunk.GetVoxel(X, Y - 1, Z).IsSolid(Direction.Up) == false)
             CalculateFaceData(mesh, Direction.Down);
 
 
@@ -99,10 +100,17 @@ public class Voxel
                 mesh.AddVertex(X - 0.5f, Y + 0.5f, Z - 0.5f);
                 mesh.AddQuadTris();
                 break;
-
-
+            default:
+                return;
         }
+        mesh.AddUV(new Vector2(0, 0));
+        mesh.AddUV(new Vector2(0, 1));
+        mesh.AddUV(new Vector2(1, 1));
+        mesh.AddUV(new Vector2(1, 0));
+
     }
+
+    // FIXME: Use a separate voxel data class for input!
     /// <summary>
     /// Is this block (type) solid from a given direction
     /// </summary>
@@ -110,6 +118,21 @@ public class Voxel
     /// <returns>True is is solid</returns>
     public virtual bool IsSolid(Direction dir)
     {
-        return true;
+        switch (dir)
+        {
+            case Direction.North:
+                return Data.IsSolidNorth;
+            case Direction.South:
+                return Data.IsSolidSouth;
+            case Direction.Up:
+                return Data.IsSolidUp;
+            case Direction.Down:
+                return Data.IsSolidDown;
+            case Direction.East:
+                return Data.IsSolidEast;
+            case Direction.West:
+                return Data.IsSolidWest;
+        }
+        return false;
     }
 }

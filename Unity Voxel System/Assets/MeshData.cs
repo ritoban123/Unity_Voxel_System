@@ -7,18 +7,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MeshData  
+public class MeshData
 {
     public List<Vector3> Verts = new List<Vector3>();
     public List<int> Tris = new List<int>();
-    public List<Vector2> Uvs = new List<Vector2>();
+    public List<Vector2> UVs = new List<Vector2>();
 
     public Mesh CreateMesh()
     {
         Mesh mesh = new Mesh();
         mesh.vertices = Verts.ToArray();
         mesh.triangles = Tris.ToArray();
-        mesh.uv = Uvs.ToArray();
+        mesh.uv = UVs.ToArray();
         mesh.RecalculateNormals();
         return mesh;
     }
@@ -26,6 +26,11 @@ public class MeshData
     public void AddVertex(float x, float y, float z)
     {
         Verts.Add(new Vector3(x, y, z));
+    }
+
+    public void AddUV(Vector2 uv)
+    {
+        UVs.Add(uv);
     }
 
     public void AddQuadTris()
